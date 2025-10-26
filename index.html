@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多语言计算器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .calculator-container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            transition: transform 0.3s ease;
+        }
+        
+        .calculator-container:hover {
+            transform: translateY(-5px);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+            font-size: 28px;
+        }
+        
+        .language-selector {
+            margin-bottom: 20px;
+        }
+        
+        .language-selector select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5ee;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .language-selector select:focus {
+            border-color: #2575fc;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5ee;
+            border-radius: 10px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="number"]:focus {
+            border-color: #2575fc;
+        }
+        
+        .operator-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .operator-btn {
+            padding: 12px;
+            background-color: #f8f9fa;
+            border: 2px solid #e1e5ee;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .operator-btn:hover {
+            background-color: #e9ecef;
+        }
+        
+        .operator-btn.active {
+            background-color: #2575fc;
+            color: white;
+            border-color: #2575fc;
+        }
+        
+        .calculate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .result-container {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .result-label {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .result-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2575fc;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+        
+        .success-message {
+            color: #28a745;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+        
+        @media (max-width: 480px) {
+            .calculator-container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .operator-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <h1 id="app-title">多语言计算器</h1>
+        
+        <div class="language-selector">
+            <select id="language-select">
+                <!-- 语言选项将通过JavaScript动态添加 -->
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <label id="a-label">输入数字 a:</label>
+            <input type="number" id="a-input" step="any" placeholder="例如: 5.5">
+        </div>
+        
+        <div class="input-group">
+            <label id="b-label">输入数字 b:</label>
+            <input type="number" id="b-input" step="any" placeholder="例如: 2.3">
+        </div>
+        
+        <div class="input-group">
+            <label id="operator-label">选择运算符:</label>
+            <div class="operator-buttons">
+                <button class="operator-btn" data-operator="+">+</button>
+                <button class="operator-btn" data-operator="-">-</button>
+                <button class="operator-btn" data-operator="*">×</button>
+                <button class="operator-btn" data-operator="/">÷</button>
+            </div>
+        </div>
+        
+        <button class="calculate-btn" id="calculate-btn">计算</button>
+        
+        <div class="result-container">
+            <div class="result-label" id="result-label">结果:</div>
+            <div class="result-value" id="result-value">-</div>
+            <div id="message"></div>
+        </div>
+    </div>
+
+    <script>
+        // 多语言文本字典
+        const translations = {
+            'en': {
+                'app-title': 'Multi-language Calculator',
+                'a-label': 'Enter number a:',
+                'b-label': 'Enter number b:',
+                'operator-label': 'Choose an operation:',
+                'calculate-btn': 'Calculate',
+                'result-label': 'Result:',
+                'divide-by-zero': 'Error: Cannot divide by zero! ⚠️',
+                'invalid-operator': 'Invalid operator! 🛑',
+                'success': 'Calculation successful! ✅'
+            },
+            'zh-CN': {
+                'app-title': '多语言计算器',
+                'a-label': '输入数字 a:',
+                'b-label': '输入数字 b:',
+                'operator-label': '选择运算符:',
+                'calculate-btn': '计算',
+                'result-label': '结果:',
+                'divide-by-zero': '错误：不能除以零！⚠️',
+                'invalid-operator': '无效运算符！🛑',
+                'success': '计算成功！✅'
+            },
+            'es': {
+                'app-title': 'Calculadora Multilingüe',
+                'a-label': 'Ingrese el número a:',
+                'b-label': 'Ingrese el número b:',
+                'operator-label': 'Elija una operación:',
+                'calculate-btn': 'Calcular',
+                'result-label': 'Resultado:',
+                'divide-by-zero': 'Error: ¡No se puede dividir por cero! ⚠️',
+                'invalid-operator': '¡Operador inválido! 🛑',
+                'success': '¡Cálculo exitoso! ✅'
+            },
+            'fr': {
+                'app-title': 'Calculatrice Multilingue',
+                'a-label': 'Entrez le nombre a:',
+                'b-label': 'Entrez le nombre b:',
+                'operator-label': 'Choisissez une opération:',
+                'calculate-btn': 'Calculer',
+                'result-label': 'Résultat:',
+                'divide-by-zero': 'Erreur: Impossible de diviser par zéro! ⚠️',
+                'invalid-operator': 'Opérateur invalide! 🛑',
+                'success': 'Calcul réussi! ✅'
+            },
+            'de': {
+                'app-title': 'Mehrsprachiger Rechner',
+                'a-label': 'Zahl a eingeben:',
+                'b-label': 'Zahl b eingeben:',
+                'operator-label': 'Wählen Sie eine Operation:',
+                'calculate-btn': 'Berechnen',
+                'result-label': 'Ergebnis:',
+                'divide-by-zero': 'Fehler: Kann nicht durch Null teilen! ⚠️',
+                'invalid-operator': 'Ungültiger Operator! 🛑',
+                'success': 'Berechnung erfolgreich! ✅'
+            },
+            'ja': {
+                'app-title': '多言語電卓',
+                'a-label': '数字 a を入力:',
+                'b-label': '数字 b を入力:',
+                'operator-label': '演算子を選択:',
+                'calculate-btn': '計算',
+                'result-label': '結果:',
+                'divide-by-zero': 'エラー：ゼロで割ることはできません！⚠️',
+                'invalid-operator': '無効な演算子！🛑',
+                'success': '計算成功！✅'
+            },
+            'ko': {
+                'app-title': '다국어 계산기',
+                'a-label': '숫자 a 입력:',
+                'b-label': '숫자 b 입력:',
+                'operator-label': '연산자 선택:',
+                'calculate-btn': '계산',
+                'result-label': '결과:',
+                'divide-by-zero': '오류: 0으로 나눌 수 없습니다! ⚠️',
+                'invalid-operator': '잘못된 연산자! 🛑',
+                'success': '계산 성공! ✅'
+            },
+            'ru': {
+                'app-title': 'Многоязычный Калькулятор',
+                'a-label': 'Введите число a:',
+                'b-label': 'Введите число b:',
+                'operator-label': 'Выберите операцию:',
+                'calculate-btn': 'Вычислить',
+                'result-label': 'Результат:',
+                'divide-by-zero': 'Ошибка: Нельзя делить на ноль! ⚠️',
+                'invalid-operator': 'Неверный оператор! 🛑',
+                'success': 'Вычисление успешно! ✅'
+            },
+            'ar': {
+                'app-title': 'آلة حاسبة متعددة اللغات',
+                'a-label': 'أدخل الرقم أ:',
+                'b-label': 'أدخل الرقم ب:',
+                'operator-label': 'اختر العملية:',
+                'calculate-btn': 'احسب',
+                'result-label': 'النتيجة:',
+                'divide-by-zero': 'خطأ: لا يمكن القسمة على صفر! ⚠️',
+                'invalid-operator': 'معامل غير صالح! 🛑',
+                'success': 'نجح الحساب! ✅'
+            },
+            'pt': {
+                'app-title': 'Calculadora Multilíngue',
+                'a-label': 'Digite o número a:',
+                'b-label': 'Digite o número b:',
+                'operator-label': 'Escolha uma operação:',
+                'calculate-btn': 'Calcular',
+                'result-label': 'Resultado:',
+                'divide-by-zero': 'Erro: Não é possível dividir por zero! ⚠️',
+                'invalid-operator': 'Operador inválido! 🛑',
+                'success': 'Cálculo bem-sucedido! ✅'
+            },
+            'it': {
+                'app-title': 'Calcolatrice Multilingue',
+                'a-label': 'Inserisci il numero a:',
+                'b-label': 'Inserisci il numero b:',
+                'operator-label': 'Scegli un\'operazione:',
+                'calculate-btn': 'Calcola',
+                'result-label': 'Risultato:',
+                'divide-by-zero': 'Errore: Impossibile dividere per zero! ⚠️',
+                'invalid-operator': 'Operatore non valido! 🛑',
+                'success': 'Calcolo riuscito! ✅'
+            },
+            'hi': {
+                'app-title': 'बहुभाषी कैलकुलेटर',
+                'a-label': 'संख्या a दर्ज करें:',
+                'b-label': 'संख्या b दर्ज करें:',
+                'operator-label': 'एक ऑपरेशन चुनें:',
+                'calculate-btn': 'गणना करें',
+                'result-label': 'परिणाम:',
+                'divide-by-zero': 'त्रुटि: शून्य से विभाजित नहीं कर सकते! ⚠️',
+                'invalid-operator': 'अमान्य ऑपरेटर! 🛑',
+                'success': 'गणना सफल! ✅'
+            },
+            'tr': {
+                'app-title': 'Çok Dilli Hesap Makinesi',
+                'a-label': 'a sayısını girin:',
+                'b-label': 'b sayısını girin:',
+                'operator-label': 'Bir işlem seçin:',
+                'calculate-btn': 'Hesapla',
+                'result-label': 'Sonuç:',
+                'divide-by-zero': 'Hata: Sıfıra bölünemez! ⚠️',
+                'invalid-operator': 'Geçersiz operatör! 🛑',
+                'success': 'Hesaplama başarılı! ✅'
+            },
+            'nl': {
+                'app-title': 'Meertalige Rekenmachine',
+                'a-label': 'Voer nummer a in:',
+                'b-label': 'Voer nummer b in:',
+                'operator-label': 'Kies een bewerking:',
+                'calculate-btn': 'Berekenen',
+                'result-label': 'Resultaat:',
+                'divide-by-zero': 'Fout: Kan niet door nul delen! ⚠️',
+                'invalid-operator': 'Ongeldige operator! 🛑',
+                'success': 'Berekening geslaagd! ✅'
+            },
+            'pl': {
+                'app-title': 'Wielojęzyczny Kalkulator',
+                'a-label': 'Wprowadź liczbę a:',
+                'b-label': 'Wprowadź liczbę b:',
+                'operator-label': 'Wybierz operację:',
+                'calculate-btn': 'Oblicz',
+                'result-label': 'Wynik:',
+                'divide-by-zero': 'Błąd: Nie można dzielić przez zero! ⚠️',
+                'invalid-operator': 'Nieprawidłowy operator! 🛑',
+                'success': 'Obliczenie udane! ✅'
+            },
+            'sv': {
+                'app-title': 'Flerspråkig Miniräknare',
+                'a-label': 'Ange nummer a:',
+                'b-label': 'Ange nummer b:',
+                'operator-label': 'Välj en operation:',
+                'calculate-btn': 'Beräkna',
+                'result-label': 'Resultat:',
+                'divide-by-zero': 'Fel: Kan inte dividera med noll! ⚠️',
+                'invalid-operator': 'Ogiltig operator! 🛑',
+                'success': 'Beräkning lyckades! ✅'
+            },
+            'da': {
+                'app-title': 'Flersproget Lommeregner',
+                'a-label': 'Indtast nummer a:',
+                'b-label': 'Indtast nummer b:',
+                'operator-label': 'Vælg en operation:',
+                'calculate-btn': 'Beregn',
+                'result-label': 'Resultat:',
+                'divide-by-zero': 'Fejl: Kan ikke dividere med nul! ⚠️',
+                'invalid-operator': 'Ugyldig operator! 🛑',
+                'success': 'Beregning succesfuld! ✅'
+            },
+            'no': {
+                'app-title': 'Flerspråklig Kalkulator',
+                'a-label': 'Skriv inn nummer a:',
+                'b-label': 'Skriv inn nummer b:',
+                'operator-label': 'Velg en operasjon:',
+                'calculate-btn': 'Beregn',
+                'result-label': 'Resultat:',
+                'divide-by-zero': 'Feil: Kan ikke dele på null! ⚠️',
+                'invalid-operator': 'Ugyldig operator! 🛑',
+                'success': 'Beregning vellykket! ✅'
+            },
+            'fi': {
+                'app-title': 'Monikielinen Laskin',
+                'a-label': 'Syötä numero a:',
+                'b-label': 'Syötä numero b:',
+                'operator-label': 'Valitse toiminto:',
+                'calculate-btn': 'Laske',
+                'result-label': 'Tulos:',
+                'divide-by-zero': 'Virhe: Ei voi jakaa nollalla! ⚠️',
+                'invalid-operator': 'Virheellinen operaattori! 🛑',
+                'success': 'Laskenta onnistui! ✅'
+            },
+            'cs': {
+                'app-title': 'Vícejazyčná Kalkulačka',
+                'a-label': 'Zadejte číslo a:',
+                'b-label': 'Zadejte číslo b:',
+                'operator-label': 'Vyberte operaci:',
+                'calculate-btn': 'Vypočítat',
+                'result-label': 'Výsledek:',
+                'divide-by-zero': 'Chyba: Nelze dělit nulou! ⚠️',
+                'invalid-operator': 'Neplatný operátor! 🛑',
+                'success': 'Výpočet úspěšný! ✅'
+            },
+            'hu': {
+                'app-title': 'Többnyelvű Számológép',
+                'a-label': 'Adja meg az a számot:',
+                'b-label': 'Adja meg a b számot:',
+                'operator-label': 'Válasszon műveletet:',
+                'calculate-btn': 'Számolás',
+                'result-label': 'Eredmény:',
+                'divide-by-zero': 'Hiba: Nullával nem lehet osztani! ⚠️',
+                'invalid-operator': 'Érvénytelen operátor! 🛑',
+                'success': 'Sikeres számítás! ✅'
+            },
+            'el': {
+                'app-title': 'Πολύγλωσση Αριθμομηχανή',
+                'a-label': 'Εισάγετε αριθμό α:',
+                'b-label': 'Εισάγετε αριθμό β:',
+                'operator-label': 'Επιλέξτε πράξη:',
+                'calculate-btn': 'Υπολογισμός',
+                'result-label': 'Αποτέλεσμα:',
+                'divide-by-zero': 'Σφάλμα: Δεν μπορώ να διαιρέσω με το μηδέν! ⚠️',
+                'invalid-operator': 'Μη έγκυρος τελεστής! 🛑',
+                'success': 'Επιτυχής υπολογισμός! ✅'
+            },
+            'he': {
+                'app-title': 'מחשבון רב-לשוני',
+                'a-label': 'הזן מספר a:',
+                'b-label': 'הזן מספר b:',
+                'operator-label': 'בחר פעולה:',
+                'calculate-btn': 'חשב',
+                'result-label': 'תוצאה:',
+                'divide-by-zero': 'שגיאה: לא ניתן לחלק באפס! ⚠️',
+                'invalid-operator': 'אופרטור לא חוקי! 🛑',
+                'success': 'חישוב הצליח! ✅'
+            }
+        };
+
+        // 语言选项
+        const languageOptions = [
+            { code: 'en', name: 'English' },
+            { code: 'zh-CN', name: '中文 (简体)' },
+            { code: 'es', name: 'Español' },
+            { code: 'fr', name: 'Français' },
+            { code: 'de', name: 'Deutsch' },
+            { code: 'ja', name: '日本語' },
+            { code: 'ko', name: '한국어' },
+            { code: 'ru', name: 'Русский' },
+            { code: 'ar', name: 'العربية' },
+            { code: 'pt', name: 'Português' },
+            { code: 'it', name: 'Italiano' },
+            { code: 'hi', name: 'हिन्दी' },
+            { code: 'tr', name: 'Türkçe' },
+            { code: 'nl', name: 'Nederlands' },
+            { code: 'pl', name: 'Polski' },
+            { code: 'sv', name: 'Svenska' },
+            { code: 'da', name: 'Dansk' },
+            { code: 'no', name: 'Norsk' },
+            { code: 'fi', name: 'Suomi' },
+            { code: 'cs', name: 'Čeština' },
+            { code: 'hu', name: 'Magyar' },
+            { code: 'el', name: 'Ελληνικά' },
+            { code: 'he', name: 'עברית' }
+        ];
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', function() {
+            // 填充语言选择下拉菜单
+            const languageSelect = document.getElementById('language-select');
+            languageOptions.forEach(lang => {
+                const option = document.createElement('option');
+                option.value = lang.code;
+                option.textContent = lang.name;
+                languageSelect.appendChild(option);
+            });
+            
+            // 设置默认语言为中文
+            languageSelect.value = 'zh-CN';
+            updateLanguage('zh-CN');
+            
+            // 语言切换事件
+            languageSelect.addEventListener('change', function() {
+                updateLanguage(this.value);
+            });
+            
+            // 运算符按钮事件
+            const operatorButtons = document.querySelectorAll('.operator-btn');
+            let selectedOperator = null;
+            
+            operatorButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 移除之前选中的按钮的active类
+                    operatorButtons.forEach(btn => btn.classList.remove('active'));
+                    
+                    // 为当前按钮添加active类
+                    this.classList.add('active');
+                    
+                    // 保存选中的运算符
+                    selectedOperator = this.getAttribute('data-operator');
+                });
+            });
+            
+            // 计算按钮事件
+            document.getElementById('calculate-btn').addEventListener('click', function() {
+                calculate(selectedOperator);
+            });
+        });
+        
+        // 更新界面语言
+        function updateLanguage(languageCode) {
+            const texts = translations[languageCode];
+            
+            // 更新所有文本元素
+            document.getElementById('app-title').textContent = texts['app-title'];
+            document.getElementById('a-label').textContent = texts['a-label'];
+            document.getElementById('b-label').textContent = texts['b-label'];
+            document.getElementById('operator-label').textContent = texts['operator-label'];
+            document.getElementById('calculate-btn').textContent = texts['calculate-btn'];
+            document.getElementById('result-label').textContent = texts['result-label'];
+            
+            // 更新占位符文本
+            document.getElementById('a-input').placeholder = texts['a-label'];
+            document.getElementById('b-input').placeholder = texts['b-label'];
+        }
+        
+        // 执行计算
+        function calculate(operator) {
+            const aInput = document.getElementById('a-input');
+            const bInput = document.getElementById('b-input');
+            const resultValue = document.getElementById('result-value');
+            const messageDiv = document.getElementById('message');
+            
+            // 获取输入值
+            const a = parseFloat(aInput.value);
+            const b = parseFloat(bInput.value);
+            
+            // 验证输入
+            if (isNaN(a) || isNaN(b)) {
+                showMessage('请输入有效的数字！', 'error');
+                resultValue.textContent = '-';
+                return;
+            }
+            
+            if (!operator) {
+                showMessage('请选择一个运算符！', 'error');
+                resultValue.textContent = '-';
+                return;
+            }
+            
+            let result;
+            let success = true;
+            
+            // 执行计算
+            switch(operator) {
+                case '+':
+                    result = a + b;
+                    break;
+                case '-':
+                    result = a - b;
+                    break;
+                case '*':
+                    result = a * b;
+                    break;
+                case '/':
+                    if (b === 0) {
+                        const currentLang = document.getElementById('language-select').value;
+                        showMessage(translations[currentLang]['divide-by-zero'], 'error');
+                        resultValue.textContent = '-';
+                        return;
+                    }
+                    result = a / b;
+                    break;
+                default:
+                    const currentLang = document.getElementById('language-select').value;
+                    showMessage(translations[currentLang]['invalid-operator'], 'error');
+                    resultValue.textContent = '-';
+                    return;
+            }
+            
+            // 显示结果
+            resultValue.textContent = result.toFixed(2);
+            
+            // 显示成功消息
+            const currentLang = document.getElementById('language-select').value;
+            showMessage(translations[currentLang]['success'], 'success');
+        }
+        
+        // 显示消息
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+            
+            // 3秒后清除消息
+            setTimeout(() => {
+                messageDiv.textContent = '';
+                messageDiv.className = '';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
